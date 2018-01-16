@@ -1,0 +1,68 @@
+﻿@model Users.Models.LoginModel
+@{ ViewBag.Title = "Login";}
+@using Users.Infrastructure
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>
+<script src="~/signalr/hubs"></script>
+<script src="~/Scripts/qrcode.js"></script>
+<script>
+    var chat = $.connection.chatHub;
+
+    chat.client.wechatLoginPhase2 = function (code, state) {
+        @*$.ajax({
+            type: "POST",
+            url: '@Url.Action("WechatLogin2Phase", "Account")',
+            data: { code: code, state: state },
+            success: null,
+            datatype: "html"
+        });*@
+        window.location.href = "@Url.Action("WechatLogin2Phase", "Account")" + "?code=" + code + "&state=" + state;
+      }
+            chat.client.callWechatLogin = function (state) {
+
+                $.ajax({
+                    type: "Get",
+                    url: '@Url.Action("WechatLogin", "Account")',
+                    data: { state: state },
+                    dataType: "html",
+                    success: function (response) {
+                        //var qrcode = new QRCode("test", {
+                        //    text: response,
+                        //    width: 128,
+                        //    height: 128,
+                        //    colorDark: "#000000",
+                        //    colorLight: "#ffffff",
+                        //    correctLevel: QRCode.CorrectLevel.H
+                        //});
+                        //$("#qR").html(qrcode);
+                        new QRCode(document.getElementById("qR"), response);
+                    }
+                });
+
+                @*window.location.href = "@Url.Action("WechatLogin", "Account")" + "?state=" + state;*@
+    }
+            $.connection.hub.logging = true;
+    $.connection.hub.start().done(function () {
+        $('#login').click(function () {
+                    chat.server.login();
+                });
+            });
+</script>
+<h2>Log In</h2>
+@Html.ValidationSummary()
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken();
+    <input type="hidden" name="returnUrl" value="@ViewBag.returnUrl" />
+    <div class="form-group">
+        <label>Name</label>
+        @Html.TextBoxFor(x => x.Name, new { @class = "form-control" })
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        @Html.PasswordFor(x => x.Password, new { @class = "form-control" })
+    </div>
+    <button class="btn btn-primary" type="submit">Log In</button>
+}
+<input type="button" id="login" value="Log In via WeChat" class="btn btn-primary" />
+<div id="qR"></div>
